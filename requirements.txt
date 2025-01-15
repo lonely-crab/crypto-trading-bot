@@ -1,0 +1,5 @@
+pyTelegramBotAPI==4.26.0
+pybit==5.8.0
+python-binance==1.0.27
+schedule==1.2.0
+python-dotenv==1.0.1

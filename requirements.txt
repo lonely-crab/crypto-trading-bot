@@ -4,3 +4,5 @@ pybit==5.11.0
 ccxt==4.4.94
 schedule==1.2.0
 python-dotenv==1.0.1
+watchdog==6.0.0
+psutil==7.0.0

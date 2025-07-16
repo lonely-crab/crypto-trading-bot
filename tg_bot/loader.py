@@ -1,6 +1,6 @@
 from telebot import TeleBot
 
-from config import TELEGRAM_TOKEN
+from tg_bot.config import TELEGRAM_TOKEN
 
 
 bot = TeleBot(TELEGRAM_TOKEN)

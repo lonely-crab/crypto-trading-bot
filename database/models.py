@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, Boolean, Float, Text, For
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 
-engine = create_engine("sqlite:///database.db")
+engine = create_engine("sqlite:///database/database.db")
 Session = sessionmaker(engine)
 session = Session()
 
@@ -13,13 +13,18 @@ class Users(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(Text, nullable=False)
-    settings_id = Column(Integer, ForeignKey("settings.id"))
+    name = Column(Text, nullable=False, unique=True)
+    settings_id = Column(Integer, ForeignKey("settings.id"), nullable=False)
 
     settings = relationship("Settings", back_populates="users", cascade="all")
 
+    def to_json(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class Settings(Base):
+    __tablename__ = "settings"
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     oi_timeframe = Column(Text, nullable=False, default="5min")
     exchanges = Column(JSON, nullable=False, default=['Bybit'])
@@ -28,3 +33,5 @@ class Settings(Base):
 
     users = relationship("Users", back_populates="settings", cascade="all")
 
+    def to_json(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}

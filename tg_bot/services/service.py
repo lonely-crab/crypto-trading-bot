@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from ..config import BYBIT_API_KEY, BYBIT_API_SECRET
 
-from typing import Dict
+from typing import Dict, List, Optional, Any, Union
 
 
 # ==== Конфигурация пользователя ====
@@ -22,9 +22,9 @@ session = HTTP(
     api_secret=BYBIT_API_SECRET
 )
 
-def get_all_tickers():
+def get_all_tickers() -> Optional[List[str]]:
     """Получает список всех доступных USDT-пар."""
-    response: Dict = session.get_tickers(category="linear")
+    response: Union[Dict, Any] = session.get_tickers(category="linear")
     print("Currencies retrieved. Receiving oi and price.")
     return [ticker["symbol"] for ticker in response["result"]["list"] if ticker["symbol"].endswith("USDT")]
 

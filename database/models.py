@@ -19,6 +19,7 @@ class Users(Base):
     Attributes:
         id (int): Unique identifier for the user (auto-incremented).
         name (str): Unique name of the user. Cannot be null.
+        page (int): Current page of the symbols menu.
         settings_id (int): Foreign key linking to the user's settings.
         settings (Settings): Relationship to the associated Settings object.
     """
@@ -26,6 +27,7 @@ class Users(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False, unique=True)
+    page = Column(Integer, nullable=False, default=0)
     settings_id = Column(Integer, ForeignKey("settings.id"), nullable=False)
 
     settings = relationship("Settings", back_populates="users", cascade="all")
@@ -58,7 +60,7 @@ class Settings(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     oi_timeframe = Column(Text, nullable=False, default="5min")
-    exchanges = Column(JSON, nullable=False, default=['Bybit'])
+    exchanges = Column(JSON, nullable=False, default=['ByBit'])
     language = Column(Text, nullable=False, default="English")
     symbols = Column(JSON, nullable=True, default=[])
 

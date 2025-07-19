@@ -8,6 +8,8 @@ from tg_bot.keyboards.inline import NEXT, PREV, MAIN_MENU
 
 from tg_bot.utils import retrieve_data_for_sub_menu
 
+from database.models import session, Users
+
 
 # (move) function for creating main menu of settings
 def create_settings_keyboard_general(settings_list: List[Tuple[str, str]]) -> InlineKeyboardMarkup:
@@ -24,25 +26,106 @@ def create_settings_keyboard_general(settings_list: List[Tuple[str, str]]) -> In
 def create_settings_keyboard_subgeneral(settings_list: List[Tuple[str, str]], call: CallbackQuery) -> Tuple[InlineKeyboardMarkup, Optional[str]]:
     keyboard: InlineKeyboardMarkup = InlineKeyboardMarkup()
 
-    sub_menu_data: Optional[List[str | Tuple[str, str]]] | str = retrieve_data_for_sub_menu(settings_list, call)
+    sub_menu_data: Optional[List[str]] | str = retrieve_data_for_sub_menu(settings_list, call)
 
     if sub_menu_data is None:
         error_str: str = "Error occured. Please, try something else."
         keyboard.add(MAIN_MENU)
         return keyboard, error_str
-    elif type(sub_menu_data) == list:
-        sub_menu_data: List[str]
-        sub_menu_buttons: List[InlineKeyboardButton] = [InlineKeyboardButton(text=item, callback_data=item) for item in sub_menu_data]
-        keyboard.add(*sub_menu_buttons)
-        keyboard.add(MAIN_MENU)
     elif type(sub_menu_data) == str:
         keyboard.add(MAIN_MENU)
         return keyboard, sub_menu_data
-    elif type(sub_menu_data) == tuple:
-        sub_menu_data: List[str] = [setting[0] for setting in settings_data]
-        sub_menu_buttons: List[InlineKeyboardButton] = [InlineKeyboardButton(text=item, callback_data=item) for item in sub_menu_data]
-        keyboard.add(*sub_menu_buttons)
-        keyboard.add(MAIN_MENU)
-        
+    elif type(sub_menu_data) == list:
+        if len(sub_menu_data) < 30:
+            sub_menu_data: List[str]
+            sub_menu_buttons: List[InlineKeyboardButton] = [InlineKeyboardButton(text=item, callback_data=item) for item in sub_menu_data]
+            keyboard.add(*sub_menu_buttons)
+            keyboard.add(MAIN_MENU)
+        else:
+            for i in range(0, min(30, len(sub_menu_data)), 3):
+                # separate db table
+                # connected to user
+                # if user presses any other command/button but next/previous 
+                # progress drops to page 1 in db
+                # might be dumbass
+
+                # better way
+                # create check if call == crypto symbols
+                # if true -> ignore create_settings_keyboard_subgeneral
+                # create some better way after
+                sub_menu_buttons: List[InlineKeyboardButton] = []
+                button_1: InlineKeyboardButton = InlineKeyboardButton(text=sub_menu_data[i], callback_data=sub_menu_data[i])
+                sub_menu_buttons.append(button_1)
+                if i + 1 < 30:
+                    button_2: InlineKeyboardButton = InlineKeyboardButton(text=sub_menu_data[i+1], callback_data=sub_menu_data[i+1])
+                sub_menu_buttons.append(button_2)
+                if i + 2 < 30:
+                    button_3: InlineKeyboardButton = InlineKeyboardButton(text=sub_menu_data[i+3], callback_data=sub_menu_data[i+3])
+                sub_menu_buttons.append(button_3)
+
+                keyboard.add(*sub_menu_buttons)
+
 
     return (keyboard, None)
+
+
+def create_symbols_keyboard(settings_list: List[Tuple[str, str]], call: CallbackQuery) -> Tuple[InlineKeyboardMarkup, Optional[str]]:
+    # pages total = len_symbol_list // 30 + len_symbol_list % 30
+    keyboard: InlineKeyboardMarkup = InlineKeyboardMarkup()
+
+    sub_menu_data: Optional[List[str]| str] = retrieve_data_for_sub_menu(settings_list, call)
+    len_symbol_list: int = len(sub_menu_data)
+
+    call_data: Optional[str] = call.data
+    username: str = call.from_user.username
+    user: Users = session.query(Users).filter(Users.name == username).one()
+
+    if call_data == "Crypto Symbols":
+        user.page = 0
+    elif call_data == NEXT.callback_data:
+        user.page += 1
+    elif call_data == PREV.callback_data:
+        user.page -= 1
+    
+    session.commit()
+
+    page: int = user.page
+    remainder: int = 1 if len_symbol_list % 30 else 0
+    final_page: int = len_symbol_list // 30 + remainder
+    
+    for i in range(page * 30, min((page + 1) * 30, len_symbol_list), 3):
+        sub_menu_buttons: List[InlineKeyboardButton] = []
+        button_1: InlineKeyboardButton = InlineKeyboardButton(text=sub_menu_data[i], callback_data=sub_menu_data[i])
+        sub_menu_buttons.append(button_1)
+        if i + 1 < len_symbol_list:
+            button_2: InlineKeyboardButton = InlineKeyboardButton(text=sub_menu_data[i+1], callback_data=sub_menu_data[i+1])
+            sub_menu_buttons.append(button_2)
+        else:
+            keyboard.add(*sub_menu_buttons)
+            break
+        if i + 2 < len_symbol_list:
+            button_3: InlineKeyboardButton = InlineKeyboardButton(text=sub_menu_data[i+2], callback_data=sub_menu_data[i+2])
+            sub_menu_buttons.append(button_3)
+        else:
+            keyboard.add(*sub_menu_buttons)
+            break
+
+        keyboard.add(*sub_menu_buttons)
+
+    if page == 0:
+        keyboard.add(*[NEXT])
+    elif page + 1 == final_page:
+        keyboard.add(*[PREV])
+    else:
+        keyboard.add(*[PREV, NEXT])
+    
+    keyboard.add(*[MAIN_MENU])
+
+    
+    return (keyboard, f"Crypto symbols. Page {page + 1}/{final_page}")
+
+
+if __name__ == "__main__":
+    print(301 // 30 + 301 % 30)
+
+

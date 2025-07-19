@@ -19,9 +19,9 @@ DEFAULT_COMMANDS = [
 
 # settings options in main menu for command /settings
 SETTINGS_OPTIONS = [
-    ("Timeframe", "in development"),
-    ("Crypto Symbols", "in development"),
-    ("Exchange", "in development"),
+    ("Timeframe", "done"),
+    ("Crypto Symbols", "done"),
+    ("Exchange", "done"),
     ("Language", "in development"),
 ]
 
@@ -37,7 +37,7 @@ OI_TIMEFRAMES = [
 
 # available exchanges 
 EXCHANGES = [
-    ("ByBit", "https://www.bybit.com/en/"),
+    "ByBit", 
 ]
 
 # available languages

@@ -6,8 +6,9 @@ from telebot.types import InlineKeyboardMarkup  # move
 from tg_bot.loader import bot
 from tg_bot.config import SETTINGS_OPTIONS, OI_TIMEFRAMES, EXCHANGES, LANGUAGES
 
-from tg_bot.keyboards.inline import create_settings_keyboard_subgeneral, create_settings_keyboard_general, create_symbols_keyboard, NEXT, PREV
-
+from tg_bot.keyboards.inline import create_settings_keyboard_subgeneral, create_settings_keyboard_general, create_symbols_keyboard, NEXT, PREV, SELECT_ALL, UNSELECT_ALL
+from tg_bot.utils import update_chosen_timeframe, update_chosen_symbols
+from tg_bot.services import get_all_tickers
 
 
 @bot.message_handler(commands=["settings"])
@@ -26,6 +27,7 @@ def handle_sub_settings(call: CallbackQuery) -> None:
     keyboard_text: str = keyboard_tuple[1] if keyboard_tuple[1] else call.data # type: ignore
     bot.edit_message_text(text=keyboard_text, chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=keyboard)
 
+
 @bot.callback_query_handler(func=lambda call: call.data in [NEXT.callback_data, PREV.callback_data])
 def handle_next_prev(call: CallbackQuery) -> None:
     keyboard_tuple: Tuple[InlineKeyboardMarkup, Optional[str]] = create_symbols_keyboard(SETTINGS_OPTIONS, call)
@@ -34,7 +36,6 @@ def handle_next_prev(call: CallbackQuery) -> None:
     print(keyboard_text)
     bot.edit_message_text(text=keyboard_text, chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=keyboard)
 
-    
 
 @bot.callback_query_handler(func=lambda call: call.data == "main_menu")
 def handle_return_to_main_settings(call: CallbackQuery) -> None:
@@ -44,6 +45,30 @@ def handle_return_to_main_settings(call: CallbackQuery) -> None:
 
 @bot.callback_query_handler(func=lambda call: call.data in OI_TIMEFRAMES)
 def handle_oi_timeframe_settings(call: CallbackQuery) -> None:
-    # keyboard: InlineKeyboardMarkup = 
-    pass
+    update_chosen_timeframe(call)
+    keyboard_tuple: Tuple[InlineKeyboardMarkup, Optional[str]] = create_settings_keyboard_subgeneral(SETTINGS_OPTIONS, call)
+    keyboard = keyboard_tuple[0]
+    keyboard_text: str = "Timeframe" # type: ignore
+    bot.edit_message_text(text=keyboard_text, chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data in get_all_tickers() or call.data.startswith("✅")) # fix symbols retrieval
+def handle_crypto_symbols_settings(call: CallbackQuery) -> None:
+    all_symbols: List[str] = get_all_tickers()
+    update_chosen_symbols(call, all_symbols)
+    keyboard_tuple: Tuple[InlineKeyboardMarkup, Optional[str]] = create_symbols_keyboard(SETTINGS_OPTIONS, call)
+    keyboard = keyboard_tuple[0]
+    keyboard_text: str = keyboard_tuple[1] if keyboard_tuple[1] else call.data # type: ignore
+    bot.edit_message_text(text=keyboard_text, chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data in [SELECT_ALL.callback_data, UNSELECT_ALL.callback_data])
+def handle_selection_unselection(call: CallbackQuery) -> None:
+    all_symbols: List[str] = get_all_tickers()
+    update_chosen_symbols(call, all_symbols)
+    keyboard_tuple: Tuple[InlineKeyboardMarkup, Optional[str]] = create_symbols_keyboard(SETTINGS_OPTIONS, call)
+    keyboard = keyboard_tuple[0]
+    keyboard_text: str = keyboard_tuple[1] if keyboard_tuple[1] else call.data # type: ignore
+    bot.edit_message_text(text=keyboard_text, chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=keyboard)
+
 

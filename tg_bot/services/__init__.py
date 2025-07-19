@@ -1,0 +1,1 @@
+from tg_bot.services.service import get_all_tickers

@@ -2,10 +2,12 @@ from telebot.types import Message
 from sqlalchemy.exc import IntegrityError, PendingRollbackError
 
 from tg_bot.loader import bot
+from tg_bot.states import BotStates
+
 from database.models import session, Users, Settings
 
 
-@bot.message_handler(commands=["start"])
+@bot.message_handler(commands=["start"], state=None)
 def handle_start(message: Message):
     """
     Handles the /start command from Telegram users.
@@ -24,6 +26,7 @@ def handle_start(message: Message):
     Notes:
         - Always commits or rolls back the session and ensures it's closed properly.
     """
+    bot.set_state(message.from_user.id, BotStates.other_state)
     username: str = message.from_user.username
     user = session.query(Users.name).filter(Users.name == username).one_or_none()
     if user:
